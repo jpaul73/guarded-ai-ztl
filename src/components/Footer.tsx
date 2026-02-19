@@ -1,31 +1,28 @@
 import { Shield, Github, Twitter } from "lucide-react";
 import ShieldLogo from "./ShieldLogo";
 const Footer = () => {
-  return <footer className="border-t border-border/50 py-12 px-4">
-      <div className="max-w-6xl mx-auto">
-        <div className="flex flex-col md:flex-row justify-between items-center gap-6">
-          <div className="flex items-center gap-3">
-            <ShieldLogo />
-            <div>
-              <span className="font-bold text-foreground">GuardEd AI</span>
-              <p className="text-sm text-muted-foreground">Safer digital habits, explained.</p>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-6 text-muted-foreground">
-            <a href="https://github.com/jpaul73/GuardEd-AI.git" className="hover:text-primary transition-colors">
-              <Github className="w-5 h-5" />
-            </a>
-            <a href="https://github.com/jpaul73/GuardEd-AI.git" className="hover:text-primary transition-colors">
-              <Twitter className="w-5 h-5" />
-            </a>
+  return <footer className="fixed bottom-0 right-0 bg-gradient-to-l from-blue-600 to-blue-800 p-6 m-4 rounded-lg shadow-lg">
+      <div className="text-right">
+        <div className="flex flex-col items-end gap-3 mb-4">
+          <div className="text-white">
+            <p className="text-sm font-semibold tracking-widest uppercase">GuardEd AI</p>
+            <p className="text-xs text-blue-100">Safer digital habits explained</p>
           </div>
         </div>
 
-        <div className="mt-8 pt-6 border-t border-border/30 text-center text-sm text-muted-foreground">
-          <p>© 2026 ZeroTrust Labs. Built for safer digital experiences.</p>
-          <p className="mt-2">No personal data is collected or stored.</p>
-          <p>Project By ZeroTrust Labs Develpoer: J Paul Doniyal </p>
+        <div className="flex items-center justify-end gap-4 text-blue-100 mb-4">
+          <a href="https://github.com/jpaul73/GuardEd-AI.git" className="hover:text-white transition-colors hover:scale-110">
+            <Github className="w-4 h-4" />
+          </a>
+          <a href="https://github.com/jpaul73/GuardEd-AI.git" className="hover:text-white transition-colors hover:scale-110">
+            <Twitter className="w-4 h-4" />
+          </a>
+        </div>
+
+        <div className="border-t border-blue-400/30 pt-2 text-xs text-blue-100">
+          <p>© 2026 ZeroTrust Labs</p>
+          <p>No Personal Data collocted</p>
+          <p className="text-blue-200 font-semibold">Dev: J Paul Doniyal</p>
         </div>
       </div>
     </footer>;

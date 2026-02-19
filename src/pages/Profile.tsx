@@ -1,12 +1,13 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { ArrowLeft, User, Shield, Award, Calendar, Edit2, Save, X, Users } from "lucide-react";
+import { ArrowLeft, User, Shield, Award, Calendar, Edit2, Save, X, Users, MessageSquare, Send } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import logoImage from "@/assets/guarded-ai-logo.png";
@@ -52,6 +53,11 @@ const Profile = () => {
   const [isAdmin, setIsAdmin] = useState(false);
   const [adminUsers, setAdminUsers] = useState<AdminUser[]>([]);
   const [loadingUsers, setLoadingUsers] = useState(false);
+  const [feedbackTitle, setFeedbackTitle] = useState("");
+  const [feedbackMessage, setFeedbackMessage] = useState("");
+  const [feedbackType, setFeedbackType] = useState<"suggestion" | "bug" | "feedback" | "praise">("feedback");
+  const [feedbackRating, setFeedbackRating] = useState<number>(5);
+  const [submittingFeedback, setSubmittingFeedback] = useState(false);
 
   useEffect(() => {
     const savedProfile = localStorage.getItem("guarded-user-profile");
@@ -116,6 +122,42 @@ const Profile = () => {
     } else {
       setIsAdmin(false);
       setAdminUsers([]);
+    }
+  };
+
+  const handleSubmitFeedback = async () => {
+    if (!feedbackTitle.trim() || !feedbackMessage.trim()) {
+      toast.error("Please fill in title and feedback message");
+      return;
+    }
+
+    setSubmittingFeedback(true);
+    try {
+      const { error } = await (supabase as any).from("user_feedback").insert({
+        user_id: profile.email || "anonymous",
+        user_name: profile.name || "Unknown",
+        user_email: profile.email || "unknown@example.com",
+        feedback_type: feedbackType,
+        title: feedbackTitle,
+        message: feedbackMessage,
+        rating: feedbackRating,
+      });
+
+      if (error) {
+        toast.error("Failed to submit feedback");
+        console.error(error);
+      } else {
+        toast.success("Thank you for your feedback!");
+        setFeedbackTitle("");
+        setFeedbackMessage("");
+        setFeedbackType("feedback");
+        setFeedbackRating(5);
+      }
+    } catch (error) {
+      console.error("Error submitting feedback:", error);
+      toast.error("An error occurred while submitting feedback");
+    } finally {
+      setSubmittingFeedback(false);
     }
   };
 
@@ -283,6 +325,88 @@ const Profile = () => {
                     )}
                   </div>
                 ))}
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Feedback Section */}
+          <Card className="glass-card mb-8">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <MessageSquare className="w-5 h-5 text-primary" />
+                Share Your Feedback
+              </CardTitle>
+              <CardDescription>Help us improve GuardEd AI with your suggestions and feedback</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {/* Feedback Type */}
+                <div>
+                  <Label htmlFor="feedback-type" className="text-foreground mb-2 block">Feedback Type</Label>
+                  <select
+                    id="feedback-type"
+                    value={feedbackType}
+                    onChange={(e) => setFeedbackType(e.target.value as any)}
+                    className="w-full px-3 py-2 rounded-md bg-secondary border border-border text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                  >
+                    <option value="feedback">General Feedback</option>
+                    <option value="bug">Report a Bug</option>
+                    <option value="suggestion">Feature Suggestion</option>
+                    <option value="praise">Praise</option>
+                  </select>
+                </div>
+
+                {/* Title */}
+                <div>
+                  <Label htmlFor="feedback-title" className="text-foreground mb-2 block">Subject</Label>
+                  <Input
+                    id="feedback-title"
+                    placeholder="Brief subject of your feedback"
+                    value={feedbackTitle}
+                    onChange={(e) => setFeedbackTitle(e.target.value)}
+                    className="bg-secondary border-border"
+                  />
+                </div>
+
+                {/* Message */}
+                <div>
+                  <Label htmlFor="feedback-message" className="text-foreground mb-2 block">Message</Label>
+                  <Textarea
+                    id="feedback-message"
+                    placeholder="Describe your feedback, bug report, or suggestion in detail..."
+                    value={feedbackMessage}
+                    onChange={(e) => setFeedbackMessage(e.target.value)}
+                    rows={4}
+                    className="bg-secondary border-border resize-none"
+                  />
+                </div>
+
+                {/* Rating */}
+                <div>
+                  <Label className="text-foreground mb-2 block">Rate Your Experience</Label>
+                  <div className="flex gap-2">
+                    {[1, 2, 3, 4, 5].map((star) => (
+                      <button
+                        key={star}
+                        onClick={() => setFeedbackRating(star)}
+                        className={`text-2xl transition-colors ${
+                          star <= feedbackRating ? "text-yellow-400" : "text-muted-foreground"
+                        }`}
+                      >
+                        ★
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <Button
+                  onClick={handleSubmitFeedback}
+                  disabled={submittingFeedback}
+                  className="w-full bg-primary text-primary-foreground hover:bg-primary/90 gap-2"
+                >
+                  <Send className="w-4 h-4" />
+                  {submittingFeedback ? "Submitting..." : "Submit Feedback"}
+                </Button>
               </div>
             </CardContent>
           </Card>

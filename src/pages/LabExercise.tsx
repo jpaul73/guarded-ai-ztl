@@ -8,6 +8,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 import logoImage from "@/assets/guarded-ai-logo.png";
 import { practicalLabsData } from "@/data/practicalLabs";
 
@@ -148,6 +149,29 @@ const LabExercise = () => {
   const [currentExercise, setCurrentExercise] = useState(0);
   const [showSolution, setShowSolution] = useState(false);
 
+  // Save score to database
+  const saveScoreToDatabase = async (finalScore: number, totalQuestions: number, labTitle: string) => {
+    try {
+      const userProfile = JSON.parse(localStorage.getItem('guarded-user-profile') || '{}');
+      const { error } = await (supabase as any).from('lab_scores').insert({
+        user_id: userProfile.id || 'anonymous',
+        student_name: userProfile.name || 'Unknown',
+        student_email: userProfile.email || 'unknown@example.com',
+        lab_id: labId,
+        lab_title: labTitle,
+        quiz_score: finalScore,
+        total_questions: totalQuestions,
+      });
+      if (error) {
+        console.error('Error saving score:', error);
+      } else {
+        toast.success('Score saved to your dashboard!');
+      }
+    } catch (error) {
+      console.error('Failed to save score:', error);
+    }
+  };
+
   const lab = labId ? labsData[labId] : null;
   const practical = labId ? practicalLabsData[labId] : null;
 
@@ -180,6 +204,8 @@ const LabExercise = () => {
       setShowResult(false);
     } else {
       setQuizCompleted(true);
+      // Save score to database
+      saveScoreToDatabase(score, lab.questions.length, lab.title);
     }
   };
 
