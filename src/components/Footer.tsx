@@ -25,6 +25,7 @@ const Footer = () => {
         <div className="mt-8 pt-6 border-t border-border/30 text-center text-sm text-muted-foreground">
           <p>© 2026 ZeroTrust Labs. Built for safer digital experiences.</p>
           <p className="mt-2">No personal data is collected or stored.</p>
+          <p>Project By ZeroTrust Labs Develpoer: J Paul Doniyal </p>
         </div>
       </div>
     </footer>;
