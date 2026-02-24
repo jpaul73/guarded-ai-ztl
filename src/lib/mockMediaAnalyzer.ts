@@ -83,7 +83,7 @@ function generateMetadata(filename: string, type: "image" | "audio" | "video"): 
   return metadata;
 }
 
-function generateIndicators(type: "image" | "audio" | "video", riskScore: number): AuthenticityIndicator[] {
+function generateIndicators(type: "image" | "audio" | "video", riskScore: number, filename: string): AuthenticityIndicator[] {
   const indicatorSets = {
     image: imageFakeIndicators,
     audio: audioFakeIndicators,
@@ -93,6 +93,15 @@ function generateIndicators(type: "image" | "audio" | "video", riskScore: number
   const patterns = indicatorSets[type];
   const indicators: AuthenticityIndicator[] = [];
   
+  // Check filename for suspicious patterns
+  const lowerFilename = filename.toLowerCase();
+  if (lowerFilename.includes("fake") || lowerFilename.includes("deepfake") || lowerFilename.includes("ai-generated") || lowerFilename.includes("edited")) {
+    riskScore += 20;
+  }
+  if (/\d{8,}/.test(filename)) {
+    riskScore += 10; // Long sequences of numbers might indicate AI-generated
+  }
+
   for (const pattern of patterns) {
     const roll = Math.random() * 100;
     if (roll < (riskScore * 0.6)) {
@@ -180,10 +189,27 @@ export async function analyzeMedia(file: File): Promise<MediaAnalysis> {
   // Determine media type
   const type = file.type.startsWith("image/") ? "image" : file.type.startsWith("audio/") ? "audio" : "video";
   
-  // Simulated risk score
-  const riskScore = Math.floor(Math.random() * 100);
-  const indicators = generateIndicators(type, riskScore);
+  // Simulated risk score based on file characteristics
+  let riskScore = Math.floor(Math.random() * 100);
+  
+  // Adjust score based on filename patterns
+  const filename = file.name.toLowerCase();
+  if (filename.includes("cnn") || filename.includes("nbcnews") || filename.includes("reuters")) {
+    riskScore = Math.max(riskScore - 20, 5); // Known legitimate sources
+  }
+  
+  // Metadata-based detection
   const metadata = generateMetadata(file.name, type);
+  
+  // Update metadata for more realistic detection
+  if (type === "image" && file.size !== undefined) {
+    // Very large files for images might indicate manipulation
+    if (file.size > 5 * 1024 * 1024) {
+      riskScore += 10;
+    }
+  }
+  
+  const indicators = generateIndicators(type, riskScore, file.name);
   
   let verdict: "authentic" | "suspicious" | "likely_deepfake";
   let confidenceLevel: "low" | "medium" | "high";
@@ -205,7 +231,7 @@ export async function analyzeMedia(file: File): Promise<MediaAnalysis> {
 
   return {
     mediaType: type,
-    authenticityScore: 100 - riskScore,
+    authenticityScore: Math.max(0, 100 - riskScore),
     verdict,
     confidenceLevel,
     indicators,

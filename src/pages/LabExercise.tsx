@@ -376,15 +376,18 @@ const LabExercise = () => {
                   <CardTitle className="text-lg mt-4">{question.question}</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <RadioGroup value={selectedAnswer?.toString()} onValueChange={(value) => !showResult && setSelectedAnswer(parseInt(value))} className="space-y-3">
-                    {question.options.map((option, index) => (
-                      <div key={index} className={`flex items-center space-x-3 p-4 rounded-lg border transition-all ${showResult ? index === question.correctAnswer ? "border-green-500/50 bg-green-500/10" : selectedAnswer === index ? "border-destructive/50 bg-destructive/10" : "border-border/50" : selectedAnswer === index ? "border-primary/50 bg-primary/5" : "border-border/50 hover:border-primary/30"}`}>
-                        <RadioGroupItem value={index.toString()} id={`option-${index}`} disabled={showResult} />
-                        <Label htmlFor={`option-${index}`} className="flex-1 cursor-pointer text-foreground">{option}</Label>
-                        {showResult && index === question.correctAnswer && <CheckCircle className="w-5 h-5 text-green-500" />}
-                        {showResult && selectedAnswer === index && index !== question.correctAnswer && <XCircle className="w-5 h-5 text-destructive" />}
-                      </div>
-                    ))}
+                  <RadioGroup value={selectedAnswer !== null ? selectedAnswer.toString() : ""} onValueChange={(value) => !showResult && setSelectedAnswer(value !== "" ? parseInt(value) : null)} className="space-y-3">
+                    {question.options.map((option, index) => {
+                      const isSelected = selectedAnswer === index;
+                      return (
+                        <div key={index} className={`flex items-center space-x-3 p-4 rounded-lg border transition-all ${showResult ? index === question.correctAnswer ? "border-green-500/50 bg-green-500/10" : isSelected ? "border-destructive/50 bg-destructive/10" : "border-border/50" : isSelected ? "border-primary/50 bg-primary/5" : "border-border/50 hover:border-primary/30"}`}>
+                          <RadioGroupItem value={index.toString()} id={`option-${index}`} disabled={showResult} />
+                          <Label htmlFor={`option-${index}`} className="flex-1 cursor-pointer text-foreground">{option}</Label>
+                          {showResult && index === question.correctAnswer && <CheckCircle className="w-5 h-5 text-green-500" />}
+                          {showResult && isSelected && index !== question.correctAnswer && <XCircle className="w-5 h-5 text-destructive" />}
+                        </div>
+                      );
+                    })}
                   </RadioGroup>
 
                   {showResult && (

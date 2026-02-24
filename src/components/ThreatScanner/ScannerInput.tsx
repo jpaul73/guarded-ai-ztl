@@ -14,7 +14,7 @@ const ScannerInput = ({ input, setInput, isScanning, onScan }: ScannerInputProps
     <>
       <div className="relative">
         <Textarea
-          placeholder="Paste a suspicious message, email content, or URL here..."
+          placeholder="Paste a suspicious email, message, URL, or link here to scan for phishing, malware, and deepfakes..."
           className="min-h-[150px] bg-input/50 border-border/50 resize-none text-foreground placeholder:text-muted-foreground focus:border-primary/50 focus:ring-primary/20"
           value={input}
           onChange={(e) => setInput(e.target.value)}

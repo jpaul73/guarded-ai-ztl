@@ -71,7 +71,7 @@ const ThreatScanner = () => {
             <span className="gradient-text">AI Threat Scanner</span>
           </h2>
           <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
-            Scan emails, messages, images, audio, and videos for phishing, deepfakes, and media manipulation. Our AI analyzes threats and explains risks in plain language.
+            Scan emails, messages, URLs, images, audio, and videos for phishing, malware, deepfakes, and media manipulation. Our AI analyzes threats with advanced detection and explains risks in plain language.
           </p>
         </div>
 
@@ -80,7 +80,7 @@ const ThreatScanner = () => {
             <TabsList className="grid w-full grid-cols-2 mb-6">
               <TabsTrigger value="text" className="flex items-center gap-2">
                 <Mail className="w-4 h-4" />
-                Email & Text
+                Email, Text & URL
               </TabsTrigger>
               <TabsTrigger value="media" className="flex items-center gap-2">
                 <ImageIcon className="w-4 h-4" />

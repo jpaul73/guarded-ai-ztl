@@ -1,13 +1,10 @@
 import { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
 import Navbar from "@/components/Navbar";
 import Hero from "@/components/Hero";
 import Features from "@/components/Features";
 import ThreatScanner from "@/components/ThreatScanner/index";
 import Footer from "@/components/Footer";
 import OnboardingForm from "@/components/OnboardingForm";
-import { Button } from "@/components/ui/button";
-import { ArrowRight } from "lucide-react";
 
 const Index = () => {
   const [hasProfile, setHasProfile] = useState<boolean | null>(null);
@@ -34,19 +31,6 @@ const Index = () => {
       <Navbar />
       <Hero />
       <Features />
-      
-      {/* Learn More About GuardEd AI */}
-      <section className="py-12 px-4">
-        <div className="max-w-4xl mx-auto text-center">
-          <Link to="/learn">
-            <Button variant="outline" size="lg" className="gap-2">
-              <ArrowRight className="w-5 h-5" />
-              Learn More About GuardEd AI
-            </Button>
-          </Link>
-        </div>
-      </section>
-      
       <ThreatScanner />
       <Footer />
     </div>

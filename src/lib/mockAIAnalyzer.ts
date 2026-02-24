@@ -1,6 +1,13 @@
 // Mock AI analyzer that simulates LLM-powered phishing detection
 // Provides realistic, dynamic explanations for demo/hackathon purposes
 
+export interface URLAnalysis {
+  url: string;
+  riskLevel: "safe" | "warning" | "danger";
+  threatType: string;
+  details: string;
+}
+
 export interface SenderVerification {
   senderEmail: string | null;
   senderName: string | null;
@@ -20,6 +27,7 @@ export interface ThreatAnalysis {
   teachBackLesson: TeachBackLesson;
   recommendations: string[];
   senderVerification: SenderVerification;
+  urlAnalysis?: URLAnalysis[];
 }
 
 interface ThreatCategory {
@@ -57,6 +65,127 @@ const suspiciousDomainPatterns = [
   /(secure|login|verify|update|confirm|account).*\./i,
   /[a-z]+-[a-z]+-[a-z]+\./i,
 ];
+
+// URL threat patterns for comprehensive analysis
+const urlThreatPatterns = [
+  { regex: /https?:\/\/(.*?)(@|\/|\?|$)/i, name: "URL with Credentials", risk: "high" },
+  { regex: /https?:\/\/[0-9]+\.[0-9]+\.[0-9]+\.[0-9]/i, name: "IP Address Instead of Domain", risk: "high" },
+  { regex: /(bit\.ly|tinyurl|short\.link|t\.co|goo\.gl|ow\.ly|bit\.do|adf\.ly)/i, name: "Shortened URL", risk: "high" },
+  { regex: /https?:\/\/[^\/]*\.(ru|cn|tk|ml|ga|cf|xyz|top|buzz|click|link|info)([\/\?]|$)/i, name: "Suspicious TLD", risk: "high" },
+  { regex: /https?:\/\/.*(%20|--).*\./i, name: "URL Obfuscation", risk: "medium" },
+  { regex: /http:\/\/[^\s]+/i, name: "Unencrypted HTTP", risk: "medium" },
+  { regex: /https?:\/\/.*[a-z0-9]*-[a-z0-9]*-[a-z0-9]*\./i, name: "Multiple Hyphens (Typosquatting)", risk: "high" },
+  { regex: /https?:\/\/[^\/]*apple[^\/]*@/i, name: "Account Hijacking Format", risk: "critical" },
+  { regex: /https?:\/\/[^\/]*secure[-_]?login/i, name: "Fake Login Page URL", risk: "critical" },
+];
+
+// Extract and analyze URLs from text
+function analyzeURLs(input: string): URLAnalysis[] {
+  const urlRegex = /https?:\/\/[^\s]+/gi;
+  const urls = input.match(urlRegex) || [];
+  const analyzed: URLAnalysis[] = [];
+  const seenUrls = new Set<string>();
+
+  for (const url of urls) {
+    if (seenUrls.has(url)) continue;
+    seenUrls.add(url);
+
+    let riskLevel: "safe" | "warning" | "danger" = "safe";
+    let threatType = "Legitimate URL";
+    let details = "This URL appears to be safe, but always exercise caution before clicking.";
+
+    // Check against URL threat patterns
+    for (const pattern of urlThreatPatterns) {
+      if (pattern.regex.test(url)) {
+        threatType = pattern.name;
+        riskLevel = pattern.risk === "critical" ? "danger" : pattern.risk === "high" ? "warning" : "warning";
+
+        switch (pattern.name) {
+          case "Shortened URL":
+            details = "Shortened URLs hide the real destination. Attackers use these to disguise malicious links.";
+            break;
+          case "Suspicious TLD":
+            details = "This URL uses a suspicious top-level domain commonly associated with phishing and malware.";
+            break;
+          case "IP Address Instead of Domain":
+            details = "URLs using IP addresses instead of domain names are often used to bypass security filters.";
+            break;
+          case "Unencrypted HTTP":
+            details = "HTTP connections are not encrypted. Legitimate financial sites always use HTTPS.";
+            break;
+          case "URL Obfuscation":
+            details = "This URL uses encoding or special characters to hide its true destination.";
+            break;
+          case "Fake Login Page URL":
+            details = "This URL structure is commonly used to create fake login pages for credential theft.";
+            break;
+          case "Account Hijacking Format":
+            details = "This URL format (using @ symbol) is a classic indicator of phishing. The browser will connect to the server after @, not before.";
+            break;
+          case "Multiple Hyphens (Typosquatting)":
+            details = "Multiple hyphens are often used to mimic legitimate URLs through typosquatting attacks.";
+            break;
+          case "URL with Credentials":
+            details = "Never include credentials in URLs. This data could be logged and exposed in browser history.";
+            break;
+        }
+        break;
+      }
+    }
+
+    // Check for domain reputation
+    try {
+      const urlObj = new URL(url);
+      const domain = urlObj.hostname.toLowerCase();
+
+      // Check if domain matches known legitimate companies
+      let isKnownLegit = false;
+      for (const [_, info] of Object.entries(knownCompanies)) {
+        if (info.domains.some(d => domain === d || domain.endsWith('.' + d))) {
+          isKnownLegit = true;
+          riskLevel = "safe";
+          threatType = "Known Legitimate Domain";
+          details = "This URL belongs to a known, legitimate company. However, verify the page content is as expected.";
+          break;
+        }
+      }
+
+      // Check for typosquatting in legitimate domains
+      if (!isKnownLegit) {
+        for (const [companyName, info] of Object.entries(knownCompanies)) {
+          for (const legit of info.domains) {
+            const similarity = calculateSimilarity(domain, legit);
+            if (similarity > 0.65 && similarity < 1) {
+              riskLevel = "danger";
+              threatType = "Possible Typosquatting (Impersonation)";
+              details = `This domain "${domain}" closely mimics the legitimate domain "${legit}" from ${companyName}. This is a common phishing technique.`;
+              break;
+            }
+          }
+        }
+      }
+
+      // Additional domain checks
+      if (riskLevel === "safe" && threatType === "Legitimate URL") {
+        // Check for suspicious patterns in domain
+        if (/[0-9]{3,}/.test(domain)) {
+          riskLevel = "warning";
+          threatType = "Domain with Unusual Numeric Pattern";
+          details = "This domain contains an unusual number of consecutive digits, often seen in phishing URLs.";
+        }
+      }
+    } catch {
+      // Invalid URL format
+      riskLevel = "warning";
+      threatType = "Malformed URL";
+      details = "This URL appears to be malformed or invalid. It may not work as intended.";
+    }
+
+    analyzed.push({ url, riskLevel, threatType, details });
+  }
+
+  return analyzed;
+}
 
 function extractSenderInfo(input: string): { email: string | null; name: string | null; company: string | null } {
   // Extract email
@@ -233,7 +362,7 @@ function generateAIExplanation(categories: ThreatCategory[], score: number): str
   return `${primaryExplanation}\n\nOverall, I detected ${categories.length} threat categories: ${threatNames}. The combined risk score of ${score}/100 indicates ${score >= 50 ? "a high-confidence phishing attempt" : "suspicious patterns that warrant caution"}.`;
 }
 
-function generateTechnicalDetails(input: string, categories: ThreatCategory[]): string {
+function generateTechnicalDetails(input: string, categories: ThreatCategory[], urlAnalysis: URLAnalysis[]): string {
   const wordCount = input.split(/\s+/).length;
   const urlCount = (input.match(/https?:\/\/[^\s]+/g) || []).length;
   const exclamationCount = (input.match(/!/g) || []).length;
@@ -243,6 +372,16 @@ function generateTechnicalDetails(input: string, categories: ThreatCategory[]): 
   details += `- URLs detected: ${urlCount}\n`;
   details += `- Exclamation marks: ${exclamationCount}\n`;
   details += `- Caps ratio: ${(capsRatio * 100).toFixed(1)}%\n\n`;
+  
+  if (urlAnalysis.length > 0) {
+    details += `**URL Analysis:**\n`;
+    urlAnalysis.forEach((url) => {
+      const riskIcon = url.riskLevel === "danger" ? "🚨" : url.riskLevel === "warning" ? "⚠️" : "✅";
+      details += `- ${riskIcon} ${url.threatType}: ${url.url}\n`;
+    });
+    details += `\n`;
+  }
+  
   if (categories.length > 0) {
     details += `**Pattern Matches:**\n`;
     categories.forEach(cat => {
@@ -279,8 +418,17 @@ function generateRecommendations(categories: ThreatCategory[], score: number): s
 export async function analyzeMessage(input: string): Promise<ThreatAnalysis> {
   await new Promise(resolve => setTimeout(resolve, 1500 + Math.random() * 1000));
 
+  // Analyze URLs in the message
+  const urlAnalysis = analyzeURLs(input);
+
   const detectedCategories: Map<string, ThreatCategory> = new Map();
   let totalScore = 0;
+
+  // Increase threat score if dangerous URLs are found
+  const hasUrlThreats = urlAnalysis.some(url => url.riskLevel === "danger");
+  const hasUrlWarnings = urlAnalysis.some(url => url.riskLevel === "warning");
+  if (hasUrlThreats) totalScore += 30;
+  if (hasUrlWarnings) totalScore += 15;
 
   for (const pattern of threatPatterns) {
     const matches = input.match(pattern.regex);
@@ -311,9 +459,10 @@ export async function analyzeMessage(input: string): Promise<ThreatAnalysis> {
   return {
     riskLevel, confidenceScore, threatCategories: categories,
     aiExplanation: generateAIExplanation(categories, confidenceScore),
-    technicalDetails: generateTechnicalDetails(input, categories),
+    technicalDetails: generateTechnicalDetails(input, categories, urlAnalysis),
     teachBackLesson: generateTeachBackLesson(categories, confidenceScore),
     recommendations: generateRecommendations(categories, confidenceScore),
     senderVerification,
+    urlAnalysis: urlAnalysis.length > 0 ? urlAnalysis : undefined,
   };
 }

@@ -1,4 +1,4 @@
-import { AlertTriangle, CheckCircle, Shield, Brain, BookOpen, Lightbulb, ChevronDown, ChevronUp, Mail, Building2, UserCheck, UserX, HelpCircle } from "lucide-react";
+import { AlertTriangle, CheckCircle, Shield, Brain, BookOpen, Lightbulb, ChevronDown, ChevronUp, Mail, Building2, UserCheck, UserX, HelpCircle, Link as LinkIcon } from "lucide-react";
 import { useState } from "react";
 import type { ThreatAnalysis } from "@/lib/mockAIAnalyzer";
 
@@ -156,6 +156,56 @@ const ScanResult = ({ result }: ScanResultProps) => {
           </div>
         </div>
       )}
+
+      {/* URL Analysis */}
+      {result.urlAnalysis && result.urlAnalysis.length > 0 && (
+        <div className="mb-6">
+          <h4 className="font-semibold mb-3 text-foreground flex items-center gap-2">
+            <LinkIcon className="w-4 h-4 text-primary" />
+            URL Analysis ({result.urlAnalysis.length} found)
+          </h4>
+          <div className="space-y-3">
+            {result.urlAnalysis.map((url, i) => {
+              const getRiskIcon = (level: string) => {
+                switch (level) {
+                  case "danger": return "🚨";
+                  case "warning": return "⚠️";
+                  default: return "✅";
+                }
+              };
+              const getRiskBgUrl = (level: string) => {
+                switch (level) {
+                  case "danger": return "bg-destructive/10 border-destructive/30";
+                  case "warning": return "bg-warning/10 border-warning/30";
+                  default: return "bg-primary/10 border-primary/30";
+                }
+              };
+              
+              return (
+                <div key={i} className={`p-3 rounded-lg border ${getRiskBgUrl(url.riskLevel)}`}>
+                  <div className="flex items-start gap-3">
+                    <span className="text-xl mt-0.5">{getRiskIcon(url.riskLevel)}</span>
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className={`px-2 py-0.5 rounded text-xs font-semibold ${
+                          url.riskLevel === "danger" ? "bg-destructive/20 text-destructive" :
+                          url.riskLevel === "warning" ? "bg-warning/20 text-warning" :
+                          "bg-primary/20 text-primary"
+                        }`}>
+                          {url.threatType}
+                        </span>
+                      </div>
+                      <p className="text-xs text-muted-foreground mt-1 font-mono break-all">{url.url}</p>
+                      <p className="text-sm text-foreground mt-2">{url.details}</p>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
 
       {/* AI Explanation */}
       <div className="mb-6 bg-secondary/30 rounded-lg p-4">
