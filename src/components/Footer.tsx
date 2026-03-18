@@ -13,7 +13,7 @@ const Footer = () => {
             <div className="border-t border-border pt-4 text-xs text-muted-foreground">
               <p>© 2026 ZeroTrust Labs</p>
               <p>No Personal Data collected</p>
-              <p className="text-foreground font-semibold">Dev: J Paul Doniyal</p>
+              <p className="text-foreground font-semibold">Dev: Cyber Engineers</p>
             </div>
           </div>
 
